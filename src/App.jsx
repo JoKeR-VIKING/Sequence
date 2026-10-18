@@ -42,51 +42,15 @@ function makeBoard() {
 }
 const BOARD = makeBoard();
 
-function CourtPortrait({ rank, red }) {
-  const accent = red ? '#b52e43' : '#203f36';
-  const gold = '#c49a4a';
-  const skin = '#f1c9a3';
-  const queen = rank === 'Q';
-  return <svg className="court-art" viewBox="0 0 100 130" role="img" aria-label={queen ? 'Queen portrait' : 'King portrait'}>
-    <defs>
-      <linearGradient id={`robe-${rank}-${red}`} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor={accent}/><stop offset="1" stopColor={red ? '#741f35' : '#102d28'}/>
-      </linearGradient>
-    </defs>
-    <rect x="4" y="4" width="92" height="122" rx="8" fill="#fff8e8" stroke={gold} strokeWidth="1.4"/>
-    <path d="M9 9h82v112H9z" fill="none" stroke={gold} strokeWidth=".7"/>
-    <path d="M13 18l8 0 0 8M87 18l-8 0 0 8M13 112l8 0 0-8M87 112l-8 0 0-8" fill="none" stroke={accent} strokeWidth="1.5"/>
-    <path d="M15 113 Q18 88 36 83 L64 83 Q82 88 85 113Z" fill={`url(#robe-${rank}-${red})`} stroke={gold} strokeWidth="1.4"/>
-    <path d="M37 83l13 14 13-14-7-5H44Z" fill="#fff2d2" stroke={gold} strokeWidth="1"/>
-    <path d="M42 95l8 8 8-8-3 18h-10Z" fill={gold}/>
-    <path d="M31 47 Q25 21 50 20 Q75 21 69 47 L67 70 Q61 85 50 85 Q39 85 33 70Z" fill={queen ? '#5a3027' : '#352a27'} stroke="#4a2d27" strokeWidth="1.5"/>
-    <path d="M36 42 Q50 32 64 42 L63 65 Q60 78 50 80 Q40 78 37 65Z" fill={skin} stroke="#b67c60" strokeWidth="1"/>
-    <path d="M37 47q6-8 13-4q7-4 13 4l-2-10q-11-9-22 0Z" fill={queen ? '#4d2d25' : '#352a27'}/>
-    <path d="M40 53l6-1M54 52l6 1" stroke="#50362d" strokeWidth="2" strokeLinecap="round"/>
-    <circle cx="44" cy="54" r="1.5" fill="#2c2925"/><circle cx="57" cy="54" r="1.5" fill="#2c2925"/>
-    <path d="M50 55l-2 8 4 1M45 68q5 4 10 0" fill="none" stroke="#9e5f4d" strokeWidth="1.4" strokeLinecap="round"/>
-    {queen ? <>
-      <path d="M32 44Q22 24 34 18Q50 7 66 18Q78 26 68 45L63 33Q50 25 37 34Z" fill={accent} stroke={gold} strokeWidth="1.5"/>
-      <path d="M34 22L39 12 50 19 61 12 66 22" fill={gold} stroke="#9b7436" strokeWidth="1.2"/>
-      <circle cx="39" cy="15" r="2.3" fill="#e9d7a1"/><circle cx="50" cy="19" r="2.3" fill="#e9d7a1"/><circle cx="61" cy="15" r="2.3" fill="#e9d7a1"/>
-      <path d="M35 42q-6 20 1 30M65 42q6 20-1 30" fill="none" stroke={gold} strokeWidth="2"/>
-    </> : <>
-      <path d="M33 37L29 22 40 27 50 13 60 27 71 22 67 39Q50 31 33 39Z" fill={gold} stroke="#967139" strokeWidth="1.5"/>
-      <path d="M37 29l13-8 13 8" fill="none" stroke="#fff0bc" strokeWidth="1.5"/>
-      <path d="M36 42q-7 22 0 31M64 42q7 22 0 31" fill="none" stroke={gold} strokeWidth="2.5"/>
-      <path d="M40 73q10 8 20 0l-2 9H42Z" fill="#352a27"/>
-    </>}
-    <path d="M22 91l8 9-6 3M78 91l-8 9 6 3" fill="none" stroke={gold} strokeWidth="1.5"/>
-    <text x="50" y="119" textAnchor="middle" fontSize="8" fontFamily="Georgia,serif" fontWeight="bold" fill={accent}>{queen ? 'QUEEN' : 'KING'}</text>
-  </svg>;
-}
-
 function CardFace({ card }) {
   const suit = SUITS.find(item => item.key === card.suit);
   const court = card.rank === 'K' || card.rank === 'Q';
+  const suitCode = ({ spades: 'S', hearts: 'H', clubs: 'C', diamonds: 'D' })[card.suit];
   return <span className={'card-face ' + (suit?.red ? 'red' : 'black') + (court ? ' court-card' : '')} aria-hidden="true">
+    {court && <img className="court-art" src={`https://deckofcardsapi.com/static/img/${card.rank}${suitCode}.svg`} alt="" loading="lazy" />}
     <span className="card-index"><b>{card.rank}</b><i>{suit?.symbol}</i></span>
-    {court ? <><CourtPortrait rank={card.rank} red={suit?.red}/><span className="court-suit">{suit?.symbol}</span></> : <span className="card-suit">{suit?.symbol}</span>}
+    {!court && <span className="card-suit">{suit?.symbol}</span>}
+    {court && <span className="court-suit">{suit?.symbol}</span>}
     <span className="card-index upside"><b>{card.rank}</b><i>{suit?.symbol}</i></span>
   </span>;
 }
