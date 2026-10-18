@@ -17,4 +17,4 @@ npm run dev
 npm run build
 ```
 
-The app is a companion to a physical game; it does not deal cards or enforce every official rule. The board uses a consistent generated layout, so verify the layout against your physical board before relying on positional matching.
+The app is a companion to a physical game; it does not deal cards or enforce every official rule. The board uses a fixed classic 10×10 card layout intended to match a standard physical Sequence board. Board editions can vary, so compare the displayed card positions with your board before a game. Game setup, chip placements, turn order, and undo history are saved in this browser using local storage.
