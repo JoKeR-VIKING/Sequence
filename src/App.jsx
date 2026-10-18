@@ -103,9 +103,10 @@ function findWinningLines(board, team) {
     const endR=r+dr*4, endC=c+dc*4;
     if (endR<0 || endR>9 || endC<0 || endC>9) continue;
     const cells = Array.from({length:5},(_,i)=>[r+dr*i,c+dc*i]);
-    if (cells.every(([rr,cc]) => ((rr===0||rr===9)&&(cc===0||cc===9)) || board[rr+'-'+cc]?.team===team)) {
-      const set = new Set(cells.map(([rr,cc])=>rr+'-'+cc));
-      if (!lines.some(line => line.filter(id=>set.has(id)).length >= 4)) lines.push([...set]);
+    if (cells.every(([rr,cc]) => (((rr===0||rr===9)&&(cc===0||cc===9)) || board[rr+'-'+cc]?.team===team)) {
+      const ids = cells.map(([rr,cc])=>rr+'-'+cc);
+      // Consecutive five-cell windows sharing four spaces count as one sequence.
+      if (!lines.some(line => line.filter(id=>ids.includes(id)).length >= 4)) lines.push(ids);
     }
   }
   return lines;
@@ -147,6 +148,8 @@ function App() {
     } catch { /* Full or disabled storage should not interrupt a game. */ }
   }, [restored, game, chips, history, current, mode, winner, winningLines]);
   const scores = useMemo(()=> (game?.teams ?? []).map((_,i)=>Object.values(chips).filter(chip=>chip.team===i).length),[game,chips]);
+  const teamSequences = useMemo(()=> (game?.teams ?? []).map((_,i)=>findWinningLines(chips,i)),[game,chips]);
+  const completedSequenceCells = useMemo(()=>new Set(teamSequences.flatMap(lines=>lines.flat())),[teamSequences]);
   const snapshot = (description, nextChips, nextPlayer, nextWinner=winner, nextLines=winningLines) => {
     setHistory(old=>[...old,{chips,current,winner,winningLines,description,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]);
     setChips(nextChips); setCurrent(nextPlayer); setWinner(nextWinner); setWinningLines(nextLines); setNotice(description);
@@ -159,7 +162,7 @@ function App() {
     if (mode==='cut') {
       if (!existing) { setNotice('There is no chip on that space. Choose an opposing chip.'); return; }
       if (existing.team===player.team) { setNotice('You can only cut an opposing team chip.'); return; }
-      if (findWinningLines(chips, existing.team).some(line => line.includes(cell.id))) { setNotice('That chip is part of a completed sequence and cannot be cut.'); return; }
+      if (completedSequenceCells.has(cell.id)) { setNotice('You cannot cut a chip that belongs to a completed sequence. Choose another opposing chip.'); return; }
       const next={...chips}; delete next[cell.id];
       snapshot(player.name+' cut a '+game.teams[existing.team].name+' chip.',next,nextPlayer,null,[]);
       setMode('mark');setSelectedCard(null);return;
@@ -190,12 +193,12 @@ function App() {
       <aside className="left-rail">
         <div className="rail-label">AT THE TABLE</div>
         <section className="active-player"><div className="rail-label">UP NEXT <span className="pulse"/></div><div className="player-avatar" style={{background:team.color}}>{player.name.charAt(0).toUpperCase()}</div><h2>{player.name}</h2><p style={{color:team.color}}><span style={{background:team.color}}/>{team.name}</p><small>TURN <b>{history.length+1}</b></small></section>
-        <section className="rail-card"><div className="rail-title">TEAM SCORE <span>{game.teams.length} TEAMS</span></div>{game.teams.map((t,i)=><div className={'score-row '+(i===player.team?'score-active':'')} key={t.name+i}><span className="team-dot" style={{background:t.color}}/><div><b>{t.name}</b><small>{game.players.filter(p=>p.team===i).map(p=>p.name).join(' · ')}</small></div><strong>{scores[i]}</strong></div>)}</section>
+        <section className="rail-card"><div className="rail-title">TEAM SCORE <span>{game.teams.length} TEAMS</span></div>{game.teams.map((t,i)=><div className={'score-row '+(i===player.team?'score-active':'')} key={t.name+i}><span className="team-dot" style={{background:t.color}}/><div><b>{t.name}</b><small>{game.players.filter(p=>p.team===i).map(p=>p.name).join(' · ')}</small><small className="sequence-progress">Sequences <strong>{teamSequences[i]?.length ?? 0} / {game.teams.length===2?2:1}</strong></small></div><strong>{scores[i]}</strong></div>)}</section>
         <section className="rail-card player-order"><div className="rail-title">PLAYER ORDER</div>{game.players.map((p,i)=><div className={'order-row '+(i===current?'is-current':'')} key={p.id}><span>{String(i+1).padStart(2,'0')}</span><i style={{background:game.teams[p.team].color}}/><b>{p.name}</b>{i===current&&<small>NOW</small>}</div>)}</section>
       </aside>
       <main className="board-area">
         <div className="board-heading"><div><span className="eyebrow">✳ &nbsp; THE PLAYING BOARD</span><h1>Make your <em>move.</em></h1><p>Track the chips on your physical board, right here.</p></div><div className="board-meta"><b>{Object.keys(chips).length} CHIPS</b><span>10 × 10 BOARD</span></div></div>
-        <div className="board-frame"><div className="board-grid">{BOARD.map(cell=>{const chip=chips[cell.id], suit=SUITS.find(s=>s.key===cell.suit), highlighted=selectedCard&&!cell.free&&keyOf(selectedCard)===keyOf(cell);return <button key={cell.id} className={'board-cell '+(cell.free?'free-cell ':'')+(chip?'occupied ':'')+(highlighted?'is-match ':'')} onClick={()=>recordCell(cell)} disabled={!!winner||cell.free} aria-label={cell.free?'Free corner':cell.rank+' of '+suit.name+(chip?', '+game.teams[chip.team].name+' chip':'') } title={cell.free?'Free corner':cell.rank+' of '+suit.name}>{cell.free?<span className="free-mark">✳<small>FREE</small></span>:<><CardFace card={cell}/>{chip&&<span className={'chip chip-'+game.teams[chip.team].token} style={{'--chip':game.teams[chip.team].color}}>{chip.kind==='wild'?'✦':''}</span>}</>}</button>})}</div></div>
+        <div className="board-frame"><div className="board-grid">{BOARD.map(cell=>{const chip=chips[cell.id], suit=SUITS.find(s=>s.key===cell.suit), highlighted=selectedCard&&!cell.free&&keyOf(selectedCard)===keyOf(cell);return <button key={cell.id} className={'board-cell '+(cell.free?'free-cell ':'')+(chip?'occupied ':'')+(highlighted?'is-match ':'')+(completedSequenceCells.has(cell.id)?'in-sequence ':'')} onClick={()=>recordCell(cell)} disabled={!!winner||cell.free} aria-label={cell.free?'Free corner':cell.rank+' of '+suit.name+(chip?', '+game.teams[chip.team].name+' chip':'') } title={cell.free?'Free corner':cell.rank+' of '+suit.name}>{cell.free?<span className="free-mark">✳<small>FREE</small></span>:<><CardFace card={cell}/>{chip&&<span className={'chip chip-'+game.teams[chip.team].token} style={{'--chip':game.teams[chip.team].color}}>{chip.kind==='wild'?'✦':''}</span>}</>}</button>})}</div></div>
         <div className="board-legend"><span><i className="free-key">✳</i> Free corner</span><span><i className="chip-key" style={{background:team.color}}/> Active team</span><span><i className="card-key">A♥</i> Card space</span><span className="legend-help">Tap an open space to record a chip</span></div>
       </main>
       <aside className="right-rail">
