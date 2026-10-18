@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="felt" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1b6248"/><stop offset="1" stop-color="#0c3026"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffe8a0"/><stop offset="1" stop-color="#c18b32"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#felt)"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="url(#gold)" stroke-width="1.7"/>
+  <g transform="rotate(-13 23 31)">
+    <rect x="8" y="11" width="29" height="39" rx="3.5" fill="#fff9e9" stroke="#d6b66c" stroke-width="1"/>
+    <text x="12" y="20" font-family="Georgia,serif" font-size="8" font-weight="bold" fill="#b83735">K</text>
+    <text x="12" y="28" font-family="Georgia,serif" font-size="8" fill="#b83735">♥</text>
+    <path d="M23 22c-7-9-14 1 0 12 14-11 7-21 0-12Z" fill="#c73b3b"/>
+  </g>
+  <g transform="rotate(12 42 32)">
+    <rect x="27" y="9" width="28" height="42" rx="3.5" fill="#fffdf5" stroke="#d6b66c" stroke-width="1"/>
+    <text x="31" y="18" font-family="Georgia,serif" font-size="8" font-weight="bold" fill="#163d30">A</text>
+    <text x="31" y="26" font-family="Georgia,serif" font-size="8" fill="#163d30">♠</text>
+    <path d="M41 23c-8 8-7 13 0 13s8-5 0-13Zm0 10v7m-4 0h8" fill="#173b30"/>
+  </g>
+  <circle cx="32" cy="51" r="9" fill="#123b2c" stroke="url(#gold)" stroke-width="2"/>
+  <text x="32" y="55" text-anchor="middle" font-family="Georgia,serif" font-size="12" font-weight="bold" fill="#f8d878">S</text>
+</svg>
