@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Check, CircleDot, History, Layers3, Minus, Plus, RotateCcw, Sparkles, Trophy, Undo2, Users, X } from 'lucide-react';
 
 const SUITS = [
@@ -18,17 +18,27 @@ const PALETTE = [
 ];
 const keyOf = card => card ? card.rank + '-' + card.suit : '';
 function makeBoard() {
-  const deck = [];
-  for (let copy = 0; copy < 2; copy++) for (const suit of SUITS) for (const rank of RANKS) deck.push({ rank, suit: suit.key });
-  let seed = 20261018;
-  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-  let n = 0;
-  return Array.from({ length: 100 }, (_, i) => {
-    const row = Math.floor(i / 10), col = i % 10;
-    if ((row === 0 || row === 9) && (col === 0 || col === 9)) return { id: row + '-' + col, row, col, free: true };
-    return { id: row + '-' + col, row, col, ...deck[n++] };
-  });
+  // Fixed classic Sequence layout so the on-screen board matches a physical board.
+  const rows = [
+    ['FREE','10S','QS','KS','AS','2D','3D','4D','5D','FREE'],
+    ['9S','10H','9H','8H','7H','6H','5H','4H','3H','6D'],
+    ['8S','QH','7D','8D','9D','10D','QD','KD','2H','7D'],
+    ['7S','KH','6D','2S','AH','KH','QH','AD','2C','8D'],
+    ['6S','AH','5D','3S','4H','3H','10H','AC','3C','9D'],
+    ['5S','2C','4D','4S','5H','2H','9H','KC','4C','10D'],
+    ['4S','3C','3D','5S','6H','7H','8H','QC','5C','QD'],
+    ['3S','4C','2D','6C','7C','8C','9C','10C','6S','KD'],
+    ['2S','5C','AS','KS','QS','10S','9S','8S','7S','AD'],
+    ['FREE','6C','7C','8C','9C','10C','QC','KC','AC','FREE'],
+  ];
+  return rows.flatMap((row, r) => row.map((code, c) => {
+    const id = r + '-' + c;
+    if (code === 'FREE') return { id, row: r, col: c, free: true };
+    const suitCode = code.slice(-1);
+    const rank = code.slice(0, -1);
+    const suit = ({ S: 'spades', H: 'hearts', C: 'clubs', D: 'diamonds' })[suitCode];
+    return { id, row: r, col: c, rank, suit };
+  }));
 }
 const BOARD = makeBoard();
 
@@ -110,6 +120,28 @@ function App() {
   const [winningLines,setWinningLines] = useState([]);
   const [historyOpen,setHistoryOpen] = useState(false);
   const [resetOpen,setResetOpen] = useState(false);
+  const [restored,setRestored] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('sequence-table-companion-v1') || 'null');
+      if (saved) {
+        setGame(saved.game ?? null);
+        setChips(saved.chips ?? {});
+        setHistory(saved.history ?? []);
+        setCurrent(saved.current ?? 0);
+        setMode(saved.mode ?? 'mark');
+        setWinner(saved.winner ?? null);
+        setWinningLines(saved.winningLines ?? []);
+      }
+    } catch { /* Storage may be unavailable; the game still works in memory. */ }
+    setRestored(true);
+  }, []);
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      window.localStorage.setItem('sequence-table-companion-v1', JSON.stringify({ game, chips, history, current, mode, winner, winningLines }));
+    } catch { /* Full or disabled storage should not interrupt a game. */ }
+  }, [restored, game, chips, history, current, mode, winner, winningLines]);
   const scores = useMemo(()=> (game?.teams ?? []).map((_,i)=>Object.values(chips).filter(chip=>chip.team===i).length),[game,chips]);
   const snapshot = (description, nextChips, nextPlayer, nextWinner=winner, nextLines=winningLines) => {
     setHistory(old=>[...old,{chips,current,winner,winningLines,description,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]);
@@ -123,6 +155,7 @@ function App() {
     if (mode==='cut') {
       if (!existing) { setNotice('There is no chip on that space. Choose an opposing chip.'); return; }
       if (existing.team===player.team) { setNotice('You can only cut an opposing team chip.'); return; }
+      if (findWinningLines(chips, existing.team).some(line => line.includes(cell.id))) { setNotice('That chip is part of a completed sequence and cannot be cut.'); return; }
       const next={...chips}; delete next[cell.id];
       snapshot(player.name+' cut a '+game.teams[existing.team].name+' chip.',next,nextPlayer,null,[]);
       setMode('mark');setSelectedCard(null);return;
