@@ -123,6 +123,7 @@ function App() {
   const [winningLines,setWinningLines] = useState([]);
   const [historyOpen,setHistoryOpen] = useState(false);
   const [resetOpen,setResetOpen] = useState(false);
+  const [homeOpen,setHomeOpen] = useState(false);
   const [restored,setRestored] = useState(false);
   useEffect(() => {
     try {
@@ -179,11 +180,12 @@ function App() {
     setChips(last.chips);setCurrent(last.current);setWinner(last.winner);setWinningLines(last.winningLines);setHistory(old=>old.slice(0,-1));setNotice('Undid: '+last.description);setSelectedCard(null);setMode('mark');
   };
   const reset = () => {setChips({});setHistory([]);setCurrent(0);setWinner(null);setWinningLines([]);setMode('mark');setSelectedCard(null);setNotice('Board cleared. Ready for a fresh round.');setResetOpen(false);};
+  const returnToSetup = () => {setGame(null);setChips({});setHistory([]);setCurrent(0);setMode('mark');setSelectedCard(null);setWinner(null);setWinningLines([]);setNotice('');setHomeOpen(false);setResetOpen(false);setHistoryOpen(false);try{window.localStorage.removeItem('sequence-table-companion-v1');}catch{/* Storage may be unavailable. */}};
   const skip = () => { if(winner)return; snapshot(game.players[current].name+' skipped their turn.',chips,nextPlayer);setMode('mark');setSelectedCard(null); };
   if(!game) return <Setup onStart={startGame}/>;
   const player=game.players[current], team=game.teams[player.team];
   return <div className="game-app">
-    <header className="game-header"><div className="brand"><span className="brand-mark"><Layers3 size={19}/></span><span>SEQUENCE <i>TABLE COMPANION</i></span></div><div className="live-status"><span/> GAME IN PROGRESS</div><div className="header-actions"><button className="quiet-button" onClick={()=>setHistoryOpen(true)}><History size={17}/> History <b>{history.length}</b></button><button className="quiet-button" onClick={()=>setResetOpen(true)}><RotateCcw size={16}/> New game</button></div></header>
+    <header className="game-header"><div className="brand"><span className="brand-mark"><Layers3 size={19}/></span><span>SEQUENCE <i>TABLE COMPANION</i></span></div><div className="live-status"><span/> GAME IN PROGRESS</div><div className="header-actions"><button className="quiet-button" onClick={()=>setHistoryOpen(true)}><History size={17}/> History <b>{history.length}</b></button><button className="quiet-button" onClick={()=>setHomeOpen(true)}><Users size={16}/> Change players</button><button className="quiet-button" onClick={()=>setResetOpen(true)}><RotateCcw size={16}/> New round</button></div></header>
     <div className="game-layout">
       <aside className="left-rail">
         <div className="rail-label">AT THE TABLE</div>
@@ -210,6 +212,7 @@ function App() {
     </div>
     {historyOpen&&<div className="overlay" onClick={()=>setHistoryOpen(false)}><section className="drawer" onClick={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">THE PAPER TRAIL</span><h2>Move history</h2></div><button className="close-button" onClick={()=>setHistoryOpen(false)} aria-label="Close history"><X/></button></div>{history.length?<div className="history-list">{[...history].reverse().map((item,i)=><div className="history-item" key={history.length-i}><span>{String(history.length-i).padStart(2,'0')}</span><div><b>{item.description}</b><small>{item.time}</small></div></div>)}</div>:<div className="empty-history"><History size={30}/><b>No moves yet</b><span>Your actions will appear here.</span></div>}<button className="secondary-button full-button" onClick={()=>{undo();setHistoryOpen(false)}} disabled={!history.length}><Undo2 size={17}/> Undo last action</button></section></div>}
     {winner!==null&&<div className="overlay centered"><section className="modal"><span className="trophy"><Trophy size={30}/></span><span className="eyebrow">SEQUENCE COMPLETE</span><h2>{game.teams[winner].name} takes it!</h2><p>Nice play. The scorekeeper has caught up with your physical game.</p><button className="primary-button full-button" onClick={()=>setResetOpen(true)}>Play another round <ArrowRight size={17}/></button><button className="text-button" onClick={()=>setWinner(null)}>Keep viewing the board</button></section></div>}
+    {homeOpen&&<div className="overlay centered"><section className="modal"><span className="trophy reset-icon"><Users size={25}/></span><h2>Change players?</h2><p>This ends the current game and returns to setup so you can choose new players and teams. The current board and move history will be cleared.</p><div className="modal-actions"><button className="secondary-button" onClick={()=>setHomeOpen(false)}>Keep playing</button><button className="primary-button" onClick={returnToSetup}>Back to setup</button></div></section></div>}
     {resetOpen&&<div className="overlay centered"><section className="modal"><span className="trophy reset-icon"><RotateCcw size={25}/></span><h2>Start a fresh game?</h2><p>This clears every chip and move. Your player setup will stay the same.</p><div className="modal-actions"><button className="secondary-button" onClick={()=>setResetOpen(false)}>Keep playing</button><button className="primary-button" onClick={reset}>Clear board</button></div></section></div>}
     <footer className="game-footer"><span>SEQUENCE TABLE COMPANION</span><span>GOOD COMPANY. CLEVER MOVES. ✳</span></footer>
   </div>;
