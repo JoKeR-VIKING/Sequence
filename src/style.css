@@ -207,3 +207,45 @@ body,button,input,select{font-family:'Nunito',system-ui,sans-serif}
   .court-card .card-index b{font-size:clamp(6px,2vw,9px)}
   .court-card .card-index i{font-size:clamp(5px,1.6vw,7px)}
 }
+
+
+/* Traditional court-card artwork: crop the authentic mirrored face illustration,
+   while retaining our compact board-friendly corner indices. */
+.card-face{background:linear-gradient(145deg,#fffefb,#fff8e9);border:1px solid #d9cba9}
+.card-face:before,.card-face:after{display:none}
+.card-index{z-index:3;font-family:Georgia,'Times New Roman',serif;color:currentColor;text-shadow:0 0 2px #fff}
+.card-index b{font-family:Georgia,'Times New Roman',serif;font-size:clamp(9px,1vw,15px);font-weight:900;line-height:.9}
+.card-index i{font-family:Georgia,'Times New Roman',serif;font-size:clamp(7px,.8vw,11px);font-weight:700}
+.card-suit{font-family:Georgia,'Times New Roman',serif;font-weight:700}
+.court-card{background:#fffdf5}
+.court-art{
+  position:absolute;
+  z-index:1;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  object-position:center 48%;
+  transform:scale(1.2);
+  pointer-events:none;
+}
+.court-card .card-index{background:#fffdf5;border-radius:1px;padding:1px}
+.court-suit{
+  position:absolute;z-index:3;left:50%;bottom:5%;transform:translateX(-50%);
+  font:700 clamp(7px,.8vw,11px) Georgia,'Times New Roman',serif;
+  line-height:1;color:currentColor;text-shadow:0 0 2px white;
+  background:#fffdf5;border-radius:2px;padding:0 1px;
+}
+@media(max-width:820px){
+ .card-index b{font-size:clamp(8px,1.8vw,13px)}
+ .card-index i{font-size:clamp(6px,1.4vw,10px)}
+ .court-art{transform:scale(1.22)}
+ .court-suit{font-size:clamp(7px,1.6vw,11px)}
+}
+@media(max-width:520px){
+ .card-index b{font-size:clamp(6px,2.1vw,10px)}
+ .card-index i{font-size:clamp(5px,1.6vw,8px)}
+ .court-art{transform:scale(1.24)}
+ .court-suit{font-size:clamp(6px,1.7vw,9px)}
+}
