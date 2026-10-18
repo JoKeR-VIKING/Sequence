@@ -44,8 +44,6 @@ const BOARD = makeBoard();
 
 function CardFace({ card }) {
   const suitCode = ({ spades: 'S', hearts: 'H', clubs: 'C', diamonds: 'D' })[card.suit];
-  // Render the complete playing-card face as the card itself — no portrait
-  // floating inside a homemade card-shaped div, and no duplicated corner marks.
   const cardCode = card.rank + suitCode;
   return <img
     className="card-face card-image"
