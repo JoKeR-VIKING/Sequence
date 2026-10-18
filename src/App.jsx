@@ -46,11 +46,10 @@ function CardFace({ card }) {
   const suitCode = ({ spades: 'S', hearts: 'H', clubs: 'C', diamonds: 'D' })[card.suit];
   // Render the complete playing-card face as the card itself — no portrait
   // floating inside a homemade card-shaped div, and no duplicated corner marks.
-  const rankCode = card.rank === '10' ? '0' : card.rank;
-  const cardCode = rankCode + suitCode;
+  const cardCode = card.rank + suitCode;
   return <img
     className="card-face card-image"
-    src={`https://deckofcardsapi.com/static/img/${cardCode}.svg`}
+    src={`/cards/${cardCode}.jpg`}
     alt={`${card.rank} of ${card.suit}`}
     loading="lazy"
     draggable="false"
