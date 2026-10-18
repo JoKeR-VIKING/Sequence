@@ -103,7 +103,7 @@ function findWinningLines(board, team) {
     const endR=r+dr*4, endC=c+dc*4;
     if (endR<0 || endR>9 || endC<0 || endC>9) continue;
     const cells = Array.from({length:5},(_,i)=>[r+dr*i,c+dc*i]);
-    if (cells.every(([rr,cc]) => (((rr===0||rr===9)&&(cc===0||cc===9)) || board[rr+'-'+cc]?.team===team)) {
+    if (cells.every(([rr, cc]) => ((rr === 0 || rr === 9) && (cc === 0 || cc === 9)) || board[rr + '-' + cc]?.team === team)) {
       const ids = cells.map(([rr,cc])=>rr+'-'+cc);
       // Consecutive five-cell windows sharing four spaces count as one sequence.
       if (!lines.some(line => line.filter(id=>ids.includes(id)).length >= 4)) lines.push(ids);
