@@ -43,16 +43,18 @@ function makeBoard() {
 const BOARD = makeBoard();
 
 function CardFace({ card }) {
-  const suit = SUITS.find(item => item.key === card.suit);
-  const court = card.rank === 'K' || card.rank === 'Q';
   const suitCode = ({ spades: 'S', hearts: 'H', clubs: 'C', diamonds: 'D' })[card.suit];
-  return <span className={'card-face ' + (suit?.red ? 'red' : 'black') + (court ? ' court-card' : '')} aria-hidden="true">
-    {court && <img className="court-art" src={`https://deckofcardsapi.com/static/img/${card.rank}${suitCode}.svg`} alt="" loading="lazy" />}
-    <span className="card-index"><b>{card.rank}</b><i>{suit?.symbol}</i></span>
-    {!court && <span className="card-suit">{suit?.symbol}</span>}
-    {court && <span className="court-suit">{suit?.symbol}</span>}
-    <span className="card-index upside"><b>{card.rank}</b><i>{suit?.symbol}</i></span>
-  </span>;
+  // Render the complete playing-card face as the card itself — no portrait
+  // floating inside a homemade card-shaped div, and no duplicated corner marks.
+  const rankCode = card.rank === '10' ? '0' : card.rank;
+  const cardCode = rankCode + suitCode;
+  return <img
+    className="card-face card-image"
+    src={`https://deckofcardsapi.com/static/img/${cardCode}.svg`}
+    alt={`${card.rank} of ${card.suit}`}
+    loading="lazy"
+    draggable="false"
+  />;
 }
 
 function Setup({ onStart }) {
