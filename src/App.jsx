@@ -116,6 +116,10 @@ function findWinningLines(board, team, usedCells = new Set()) {
   }
   return lines;
 }
+function findTeamSequences(board, teamCount) {
+  const usedCells = new Set();
+  return Array.from({ length: teamCount }, (_, team) => findWinningLines(board, team, usedCells));
+}
 function requiredSequences(game) {
   return game.players.length === 3 && game.teams.length === 3 ? 1 : 2;
 }
@@ -156,10 +160,7 @@ function App() {
     } catch { /* Full or disabled storage should not interrupt a game. */ }
   }, [restored, game, chips, history, current, mode, winner, winningLines]);
   const scores = useMemo(()=> (game?.teams ?? []).map((_,i)=>Object.values(chips).filter(chip=>chip.team===i).length),[game,chips]);
-  const teamSequences = useMemo(()=>{
-    const usedCells = new Set();
-    return (game?.teams ?? []).map((_,i)=>findWinningLines(chips,i,usedCells));
-  },[game,chips]);
+  const teamSequences = useMemo(()=>findTeamSequences(chips,game?.teams.length ?? 0),[game,chips]);
   const completedSequenceCells = useMemo(()=>new Set(teamSequences.flatMap(lines=>lines.flat())),[teamSequences]);
   const snapshot = (description, nextChips, nextPlayer, nextWinner=winner, nextLines=winningLines) => {
     setHistory(old=>[...old,{chips,current,winner,winningLines,description,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]);
@@ -181,7 +182,7 @@ function App() {
     if (existing) { setNotice('That space is occupied. Choose an open space.'); return; }
     if (mode==='mark' && selectedCard && keyOf(selectedCard)!==keyOf(cell)) { setNotice('That space does not match the selected card.');return; }
     const next={...chips,[cell.id]:{team:player.team,player:player.id,kind:mode}};
-    const lines=findWinningLines(next,player.team);
+    const lines=findTeamSequences(next,game.teams.length)[player.team];
     const required=requiredSequences(game);
     const hasWon=lines.length>=required;
     const label=mode==='wild'?player.name+' played a wild move.':player.name+' marked '+cell.rank+SUITS.find(s=>s.key===cell.suit).symbol+'.';
