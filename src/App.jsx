@@ -120,8 +120,8 @@ function findTeamSequences(board, teamCount) {
   const usedCells = new Set();
   return Array.from({ length: teamCount }, (_, team) => findWinningLines(board, team, usedCells));
 }
-function requiredSequences(game) {
-  return game.players.length === 3 && game.teams.length === 3 ? 1 : 2;
+function requiredSequences() {
+  return 2;
 }
 
 function App() {
