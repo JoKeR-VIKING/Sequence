@@ -96,20 +96,28 @@ function Setup({ onStart }) {
   </main>;
 }
 
-function findWinningLines(board, team) {
+function findWinningLines(board, team, usedCells = new Set()) {
   const directions = [[0,1],[1,0],[1,1],[1,-1]];
   const lines = [];
   for (let r=0;r<10;r++) for (let c=0;c<10;c++) for (const [dr,dc] of directions) {
     const endR=r+dr*4, endC=c+dc*4;
     if (endR<0 || endR>9 || endC<0 || endC>9) continue;
     const cells = Array.from({length:5},(_,i)=>[r+dr*i,c+dc*i]);
-    if (cells.every(([rr, cc]) => ((rr === 0 || rr === 9) && (cc === 0 || cc === 9)) || board[rr + '-' + cc]?.team === team)) {
-      const ids = cells.map(([rr,cc])=>rr+'-'+cc);
-      // Consecutive five-cell windows sharing four spaces count as one sequence.
-      if (!lines.some(line => line.filter(id=>ids.includes(id)).length >= 4)) lines.push(ids);
+    const ids = cells.map(([rr,cc])=>rr+'-'+cc);
+    const isSequence = cells.every(([rr, cc]) =>
+      ((rr === 0 || rr === 9) && (cc === 0 || cc === 9)) ||
+      board[rr + '-' + cc]?.team === team
+    );
+    // Every board space, including a free corner, can belong to only one sequence.
+    if (isSequence && ids.every(id => !usedCells.has(id))) {
+      lines.push(ids);
+      ids.forEach(id => usedCells.add(id));
     }
   }
   return lines;
+}
+function requiredSequences(game) {
+  return game.players.length === 3 && game.teams.length === 3 ? 1 : 2;
 }
 
 function App() {
@@ -148,7 +156,10 @@ function App() {
     } catch { /* Full or disabled storage should not interrupt a game. */ }
   }, [restored, game, chips, history, current, mode, winner, winningLines]);
   const scores = useMemo(()=> (game?.teams ?? []).map((_,i)=>Object.values(chips).filter(chip=>chip.team===i).length),[game,chips]);
-  const teamSequences = useMemo(()=> (game?.teams ?? []).map((_,i)=>findWinningLines(chips,i)),[game,chips]);
+  const teamSequences = useMemo(()=>{
+    const usedCells = new Set();
+    return (game?.teams ?? []).map((_,i)=>findWinningLines(chips,i,usedCells));
+  },[game,chips]);
   const completedSequenceCells = useMemo(()=>new Set(teamSequences.flatMap(lines=>lines.flat())),[teamSequences]);
   const snapshot = (description, nextChips, nextPlayer, nextWinner=winner, nextLines=winningLines) => {
     setHistory(old=>[...old,{chips,current,winner,winningLines,description,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]);
@@ -171,7 +182,7 @@ function App() {
     if (mode==='mark' && selectedCard && keyOf(selectedCard)!==keyOf(cell)) { setNotice('That space does not match the selected card.');return; }
     const next={...chips,[cell.id]:{team:player.team,player:player.id,kind:mode}};
     const lines=findWinningLines(next,player.team);
-    const required=game.teams.length===2?2:1;
+    const required=requiredSequences(game);
     const hasWon=lines.length>=required;
     const label=mode==='wild'?player.name+' played a wild move.':player.name+' marked '+cell.rank+SUITS.find(s=>s.key===cell.suit).symbol+'.';
     snapshot(label,next,nextPlayer,hasWon?player.team:null,hasWon?lines:[]);
@@ -193,7 +204,7 @@ function App() {
       <aside className="left-rail">
         <div className="rail-label">AT THE TABLE</div>
         <section className="active-player"><div className="rail-label">UP NEXT <span className="pulse"/></div><div className="player-avatar" style={{background:team.color}}>{player.name.charAt(0).toUpperCase()}</div><h2>{player.name}</h2><p style={{color:team.color}}><span style={{background:team.color}}/>{team.name}</p><small>TURN <b>{history.length+1}</b></small></section>
-        <section className="rail-card"><div className="rail-title">TEAM SCORE <span>{game.teams.length} TEAMS</span></div>{game.teams.map((t,i)=><div className={'score-row '+(i===player.team?'score-active':'')} key={t.name+i}><span className="team-dot" style={{background:t.color}}/><div><b>{t.name}</b><small>{game.players.filter(p=>p.team===i).map(p=>p.name).join(' · ')}</small><small className="sequence-progress">Sequences <strong>{teamSequences[i]?.length ?? 0} / {game.teams.length===2?2:1}</strong></small></div><strong>{scores[i]}</strong></div>)}</section>
+        <section className="rail-card"><div className="rail-title">TEAM SCORE <span>{game.teams.length} TEAMS</span></div>{game.teams.map((t,i)=><div className={'score-row '+(i===player.team?'score-active':'')} key={t.name+i}><span className="team-dot" style={{background:t.color}}/><div><b>{t.name}</b><small>{game.players.filter(p=>p.team===i).map(p=>p.name).join(' · ')}</small><small className="sequence-progress">Sequences <strong>{teamSequences[i]?.length ?? 0} / {requiredSequences(game)}</strong></small></div><strong>{scores[i]}</strong></div>)}</section>
         <section className="rail-card player-order"><div className="rail-title">PLAYER ORDER</div>{game.players.map((p,i)=><div className={'order-row '+(i===current?'is-current':'')} key={p.id}><span>{String(i+1).padStart(2,'0')}</span><i style={{background:game.teams[p.team].color}}/><b>{p.name}</b>{i===current&&<small>NOW</small>}</div>)}</section>
       </aside>
       <main className="board-area">
